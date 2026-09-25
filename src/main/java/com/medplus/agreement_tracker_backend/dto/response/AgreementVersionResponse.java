@@ -65,7 +65,7 @@ public record AgreementVersionResponse(
         List<ManufacturerSummary> manufacturers,
         List<DivisionRuleSummary> divisionRules,
         List<ProductRuleSummary> productRules,
-        List<ProductSummary> products,
+        Integer productCount,
         ProductScopeComputeStatus productScopeComputeStatus,
         AssetSummary asset,
         List<AssetPayoutPeriodSummary> assetPayoutPeriods,

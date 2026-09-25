@@ -216,14 +216,8 @@ public class AgreementMapperService {
                                 })
                                 .toList();
 
-                List<AgreementVersionResponse.ProductSummary> products = computedProductRepository
-                                .findByAgreementVersionId(versionIdForRules)
-                                .stream()
-                                .map(p -> new AgreementVersionResponse.ProductSummary(
-                                                p.getProductId(), p.getProductNameSnapshot(),
-                                                p.getManufacturerNameSnapshot(), p.getDivisionNameSnapshot(),
-                                                p.getManufacturerId(), p.getDivisionId()))
-                                .toList();
+                Integer productCount = (int) computedProductRepository
+                                .countByAgreementVersionId(versionIdForRules);
 
                 AgreementType agreementType = version.getAgreementType();
 
@@ -305,7 +299,7 @@ public class AgreementMapperService {
                                 .manufacturers(manufacturers)
                                 .divisionRules(divisionRules)
                                 .productRules(productRules)
-                                .products(products)
+                                .productCount(productCount)
                                 .productScopeComputeStatus(version.getProductScopeComputeStatus())
                                 .asset(assetSummary)
                                 .assetPayoutPeriods(assetPayoutPeriods)

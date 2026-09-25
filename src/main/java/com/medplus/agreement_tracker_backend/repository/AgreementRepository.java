@@ -11,12 +11,15 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-
+import java.util.Optional;
 @Repository
 public interface AgreementRepository extends JpaRepository<Agreement, Long>, JpaSpecificationExecutor<Agreement> {
 
     @Query("SELECT a FROM Agreement a WHERE a.owner.id = :ownerId")
     Page<Agreement> findByOwnerId(@Param("ownerId") Long ownerId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"owner", "agreementGroup"})
+    Optional<Agreement> findById(Long id);
 
     @EntityGraph(attributePaths = {"owner"})
     List<Agreement> findByAgreementGroupId(Long agreementGroupId);

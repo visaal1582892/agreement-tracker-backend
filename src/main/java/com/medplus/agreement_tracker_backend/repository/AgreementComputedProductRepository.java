@@ -13,6 +13,8 @@ import java.util.List;
 public interface AgreementComputedProductRepository extends JpaRepository<AgreementComputedProduct, Long>, JpaSpecificationExecutor<AgreementComputedProduct> {
 
     List<AgreementComputedProduct> findByAgreementVersionId(Long agreementId);
+    
+    long countByAgreementVersionId(Long agreementId);
 
     void deleteByAgreementVersionId(Long agreementId);
 
