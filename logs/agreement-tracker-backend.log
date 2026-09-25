@@ -1,0 +1,48 @@
+2026-09-24 16:57:04.418  INFO [agreement-tracker-backend] [main] c.m.a.TestRunner                         : Starting TestRunner using Java 17.0.20.1 with PID 153383 (started by developer in /home/developer/rohitworkspace/prod/agreement-tracker/agreement-tracker-backend)
+2026-09-24 16:57:04.419 DEBUG [agreement-tracker-backend] [main] c.m.a.TestRunner                         : Running with Spring Boot v4.0.6, Spring v7.0.7
+2026-09-24 16:57:04.420  INFO [agreement-tracker-backend] [main] c.m.a.TestRunner                         : No active profile set, falling back to 1 default profile: "default"
+2026-09-24 16:57:05.360  INFO [agreement-tracker-backend] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-24 16:57:05.546  INFO [agreement-tracker-backend] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 172 ms. Found 37 JPA repository interfaces.
+2026-09-24 16:57:06.130  INFO [agreement-tracker-backend] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-24 16:57:06.338  INFO [agreement-tracker-backend] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@6bcf2780
+2026-09-24 16:57:06.340  INFO [agreement-tracker-backend] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-24 16:57:06.561  INFO [agreement-tracker-backend] [main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-09-24 16:57:06.608  INFO [agreement-tracker-backend] [main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-09-24 16:57:06.911  INFO [agreement-tracker-backend] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-24 16:57:07.044  INFO [agreement-tracker-backend] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/agreement_tracker?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&createDatabaseIfNotExist=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.37
+	Default catalog/schema: agreement_tracker/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-24 16:57:08.443  INFO [agreement-tracker-backend] [main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-24 16:57:08.447  INFO [agreement-tracker-backend] [main] org.hibernate.orm.jdbc.batch             : HHH100501: Automatic JDBC statement batching enabled (maximum batch size 50)
+2026-09-24 16:57:09.478  INFO [agreement-tracker-backend] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-24 16:57:09.612  INFO [agreement-tracker-backend] [main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-09-24 16:57:13.455  INFO [agreement-tracker-backend] [main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-09-24 16:57:16.252  INFO [agreement-tracker-backend] [main] c.m.a.TestRunner                         : Started TestRunner in 12.208 seconds (process running for 16.641)
+2026-09-24 16:57:16.279  INFO [agreement-tracker-backend] [main] c.m.a.config.DataSeeder                  : Deprecated LEADERSHIP/FINANCE roles and users removed
+2026-09-24 16:57:16.929  INFO [agreement-tracker-backend] [main] c.m.a.config.DataSeeder                  : Seed user passwords synchronized
+2026-09-24 16:57:17.494  INFO [agreement-tracker-backend] [main] c.m.a.config.DataSeeder                  : Role-rights seeded: ADMIN(4), ACCOUNT_MANAGER(7), APPROVER(6)
+2026-09-24 16:57:17.495  INFO [agreement-tracker-backend] [main] c.m.a.config.DataSeeder                  : Data seeding complete
+2026-09-24 16:57:17.564  INFO [agreement-tracker-backend] [main] RevenueRecognitionCalculationServiceImpl : Starting revenue recognition calculation for month keys: [202504, 202505, 202506]
+2026-09-24 16:57:17.566  INFO [agreement-tracker-backend] [main] RevenueRecognitionCalculationServiceImpl : Processing agreements active between 2025-04-01 and 2025-06-30
+2026-09-24 16:57:17.614  INFO [agreement-tracker-backend] [main] RevenueRecognitionCalculationServiceImpl : Revenue recognition calculation completed successfully.
+2026-09-24 16:57:17.642  INFO [agreement-tracker-backend] [main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.medplus.agreement_tracker_backend.AgreementTrackerBackendApplicationTests]: AgreementTrackerBackendApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-24 16:57:17.654  INFO [agreement-tracker-backend] [main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.medplus.agreement_tracker_backend.AgreementTrackerApplication for test class com.medplus.agreement_tracker_backend.AgreementTrackerBackendApplicationTests
+2026-09-24 16:57:17.660  INFO [agreement-tracker-backend] [main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.medplus.agreement_tracker_backend.AgreementTrackerBackendApplicationTests]: AgreementTrackerBackendApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-24 16:57:17.664  INFO [agreement-tracker-backend] [main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.medplus.agreement_tracker_backend.AgreementTrackerApplication for test class com.medplus.agreement_tracker_backend.AgreementTrackerBackendApplicationTests
+2026-09-24 16:57:17.682  INFO [agreement-tracker-backend] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-09-24 16:57:17.972  INFO [agreement-tracker-backend] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1811bc4f
+2026-09-24 16:57:17.973  INFO [agreement-tracker-backend] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-09-24 16:57:18.030  INFO [agreement-tracker-backend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2026-09-24 16:57:18.040  INFO [agreement-tracker-backend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+2026-09-24 16:57:18.046  INFO [agreement-tracker-backend] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-09-24 16:57:18.051  INFO [agreement-tracker-backend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-09-24 16:57:18.053  INFO [agreement-tracker-backend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
