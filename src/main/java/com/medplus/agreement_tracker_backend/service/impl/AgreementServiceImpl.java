@@ -17,6 +17,7 @@ import com.medplus.agreement_tracker_backend.dto.request.UpdateDraftRequest;
 import com.medplus.agreement_tracker_backend.dto.request.VendorSnapshotPayload;
 import com.medplus.agreement_tracker_backend.dto.response.AgreementResponse;
 import com.medplus.agreement_tracker_backend.dto.response.AgreementVersionResponse;
+import com.medplus.agreement_tracker_backend.dto.response.AgreementVersionSummaryResponse;
 import com.medplus.agreement_tracker_backend.dto.response.ApprovalTimelineResponse;
 import com.medplus.agreement_tracker_backend.dto.response.BulkAgreementCreateResponse;
 import com.medplus.agreement_tracker_backend.dto.response.BulkGroupSubmitResponse;
@@ -434,25 +435,27 @@ public class AgreementServiceImpl implements AgreementService {
     public AgreementVersionResponse updateDraft(Long agreementVersionId, UpdateDraftRequest request, Long currentUserId,
             boolean validateStep1, boolean validateStep2,
             boolean validateCommercialStructure) {
+        
+        AgreementVersion version = loadAndValidateOwnership(agreementVersionId, currentUserId);
+
         if (validateStep1) {
             var violations = validator.validate(request, Step1Validation.class);
             if (!violations.isEmpty()) {
                 throw new ConstraintViolationException(violations);
             }
-            agreementValidationService.validateStep1Fields(request);
+            agreementValidationService.validateStep1Fields(request, version);
         }
         if (validateStep2) {
             var violations = validator.validate(request, Step2Validation.class);
             if (!violations.isEmpty()) {
                 throw new ConstraintViolationException(violations);
             }
-            agreementValidationService.validateStep2Fields(request);
+            agreementValidationService.validateStep2Fields(request, version);
         }
         if (validateCommercialStructure) {
             agreementValidationService.validateCommercialStructureFields(agreementVersionId, request);
         }
 
-        AgreementVersion version = loadAndValidateOwnership(agreementVersionId, currentUserId);
         if (version.getApprovalStatus() == ApprovalStatus.APPROVED
                 && Boolean.TRUE.equals(request.requiresReapproval())) {
             return createReapprovalDraft(version, request, currentUserId);
@@ -647,15 +650,23 @@ public class AgreementServiceImpl implements AgreementService {
     @Override
     @Transactional(readOnly = true)
     public AgreementVersionResponse getAgreementVersionById(Long agreementVersionId, Long currentUserId) {
+        long startTime = System.currentTimeMillis();
         AgreementVersion version = agreementVersionRepository.findById(agreementVersionId)
                 .orElseThrow(() -> new ResourceNotFoundException("AgreementVersion", agreementVersionId));
         enforceDraftVisibility(version, currentUserId);
-        return agreementMapperService.toVersionResponse(version);
+        long dbTime = System.currentTimeMillis();
+        AgreementVersionResponse response = agreementMapperService.toVersionResponse(version);
+        long endTime = System.currentTimeMillis();
+        log.info("getAgreementVersionById [{}] - DB Time: {}ms, Serialize Time: {}ms, Total Time: {}ms",
+                 agreementVersionId, (dbTime - startTime), (endTime - dbTime), (endTime - startTime));
+        return response;
     }
 
     @Override
     @Transactional(readOnly = true)
     public AgreementResponse getAgreementById(Long agreementId, Long currentUserId) {
+        long startTime = System.currentTimeMillis();
+        
         Agreement parent = agreementRepository.findById(agreementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Agreement", agreementId));
         enforceAgreementDraftVisibility(parent, currentUserId);
@@ -665,12 +676,25 @@ public class AgreementServiceImpl implements AgreementService {
         AgreementVersion latest = latestBatch.isEmpty() ? null : latestBatch.get(0);
         AgreementVersion displayVersion = agreementMapperService.resolveVisibleLatest(parent, latest, currentUserId);
 
+        long dbEndTime = System.currentTimeMillis();
+
         if (displayVersion == null) {
-            return agreementMapperService.toParentResponseEmpty(parent);
+            AgreementResponse emptyResp = agreementMapperService.toParentResponseEmpty(parent);
+            log.info("getAgreementById [{}] - DB Time: {}ms, Serialize Time: {}ms", agreementId, (dbEndTime - startTime), (System.currentTimeMillis() - dbEndTime));
+            return emptyResp;
         }
 
         List<AgreementVendor> vendors = vendorRepository.findByAgreementVersionId(displayVersion.getId());
-        return agreementMapperService.toParentResponse(parent, displayVersion, vendors);
+        
+        long preSerializeTime = System.currentTimeMillis();
+        
+        AgreementResponse response = agreementMapperService.toParentResponse(parent, displayVersion, vendors);
+        
+        long endTime = System.currentTimeMillis();
+        log.info("getAgreementById [{}] - DB Time: {}ms, Serialize Time: {}ms, Total Time: {}ms", 
+                 agreementId, (preSerializeTime - startTime), (endTime - preSerializeTime), (endTime - startTime));
+                 
+        return response;
     }
 
     @Override
@@ -743,7 +767,7 @@ public class AgreementServiceImpl implements AgreementService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AgreementVersionResponse> getVersionsByAgreementId(Long agreementId, Long currentUserId) {
+    public List<AgreementVersionSummaryResponse> getVersionsByAgreementId(Long agreementId, Long currentUserId) {
         Agreement parent = agreementRepository.findById(agreementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Agreement", agreementId));
         enforceAgreementDraftVisibility(parent, currentUserId);
@@ -753,7 +777,7 @@ public class AgreementServiceImpl implements AgreementService {
                 .filter(v -> v.getApprovalStatus() != ApprovalStatus.DRAFT
                         || v.getAgreement().getOwner().getId().equals(currentUserId))
                 .sorted((a, b) -> Integer.compare(a.getVersionNumber(), b.getVersionNumber()))
-                .map(agreementMapperService::toVersionResponse)
+                .map(agreementMapperService::toVersionSummaryResponse)
                 .toList();
     }
 

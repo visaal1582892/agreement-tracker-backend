@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,18 +62,39 @@ public class PartnerIntegrationService {
             return List.of();
         }
 
-        Map<Long, IntegrationVendorResponse> resolved = new LinkedHashMap<>();
-        for (Long id : ids.stream().filter(Objects::nonNull).distinct().toList()) {
-            if (resolved.containsKey(id)) {
-                continue;
-            }
-            fetchPartners(String.valueOf(id), null).stream()
-                    .filter(item -> Objects.equals(item.getAccountId(), id))
-                    .findFirst()
-                    .map(this::toIntegrationVendor)
-                    .ifPresent(vendor -> resolved.put(id, vendor));
+        List<Long> distinctIds = ids.stream().filter(Objects::nonNull).distinct().toList();
+        if (distinctIds.isEmpty()) {
+            return List.of();
         }
-        return new ArrayList<>(resolved.values());
+
+        // Fire all lookups in parallel instead of sequentially to avoid N * timeout delay
+        Map<Long, IntegrationVendorResponse> resolved = new ConcurrentHashMap<>();
+        List<CompletableFuture<Void>> futures = distinctIds.stream()
+                .map(id -> CompletableFuture.runAsync(() -> {
+                    try {
+                        fetchPartners(String.valueOf(id), null).stream()
+                                .filter(item -> Objects.equals(item.getAccountId(), id))
+                                .findFirst()
+                                .map(this::toIntegrationVendor)
+                                .ifPresent(vendor -> resolved.put(id, vendor));
+                    } catch (Exception ex) {
+                        log.warn("getPartnersByIds: lookup failed for id={}, msg={}", id, ex.getMessage());
+                    }
+                }))
+                .collect(Collectors.toList());
+
+        // Wait for all parallel fetches to complete (with timeout equal to read-timeout)
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        } catch (Exception ex) {
+            log.warn("getPartnersByIds: one or more parallel lookups failed, returning partial results", ex);
+        }
+
+        // Preserve original insertion order of ids
+        return distinctIds.stream()
+                .map(resolved::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     public List<LocationOptionResponse> searchCountries(String q) {

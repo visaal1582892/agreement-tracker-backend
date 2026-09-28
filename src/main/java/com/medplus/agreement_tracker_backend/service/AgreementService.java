@@ -7,6 +7,7 @@ import com.medplus.agreement_tracker_backend.dto.request.TerminateAgreementReque
 import com.medplus.agreement_tracker_backend.dto.request.UpdateDraftRequest;
 import com.medplus.agreement_tracker_backend.dto.response.AgreementResponse;
 import com.medplus.agreement_tracker_backend.dto.response.AgreementVersionResponse;
+import com.medplus.agreement_tracker_backend.dto.response.AgreementVersionSummaryResponse;
 import com.medplus.agreement_tracker_backend.dto.response.ApprovalTimelineResponse;
 import com.medplus.agreement_tracker_backend.dto.response.BulkAgreementCreateResponse;
 import com.medplus.agreement_tracker_backend.dto.response.BulkGroupSubmitResponse;
@@ -41,7 +42,7 @@ public interface AgreementService {
                                            LocalDate startDateFrom, LocalDate startDateTo,
                                            LocalDate endDateFrom, LocalDate endDateTo);
 
-    List<AgreementVersionResponse> getVersionsByAgreementId(Long agreementId, Long currentUserId);
+    List<AgreementVersionSummaryResponse> getVersionsByAgreementId(Long agreementId, Long currentUserId);
 
     AgreementVersionResponse transferOwnership(Long agreementVersionId, Long newOwnerUserId, Long performedByUserId,
                                                boolean isAdmin, String comments);

@@ -5,6 +5,8 @@ import com.medplus.agreement_tracker_backend.dto.request.BulkTransferRequest;
 import com.medplus.agreement_tracker_backend.dto.request.CreateAgreementRequest;
 import com.medplus.agreement_tracker_backend.dto.response.AgreementResponse;
 import com.medplus.agreement_tracker_backend.dto.response.AgreementVersionResponse;
+import com.medplus.agreement_tracker_backend.dto.response.AgreementVersionSummaryResponse;
+
 import com.medplus.agreement_tracker_backend.dto.response.BulkAgreementCreateResponse;
 import com.medplus.agreement_tracker_backend.enums.RightCode;
 import com.medplus.agreement_tracker_backend.security.UserPrincipal;
@@ -96,7 +98,7 @@ public class AgreementController {
 
     @GetMapping("/{id}/versions")
     @PreAuthorize(AGREEMENT_VIEW)
-    public ResponseEntity<List<AgreementVersionResponse>> getVersions(
+    public ResponseEntity<List<AgreementVersionSummaryResponse>> getVersions(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(agreementService.getVersionsByAgreementId(id, principal.getId()));

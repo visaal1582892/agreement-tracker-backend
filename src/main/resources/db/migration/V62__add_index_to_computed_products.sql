@@ -1,0 +1,1 @@
+CREATE INDEX idx_computed_products_version_id ON agreement_computed_products (agreement_version_id);

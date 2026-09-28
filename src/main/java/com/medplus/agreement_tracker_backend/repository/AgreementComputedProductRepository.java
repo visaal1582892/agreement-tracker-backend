@@ -6,6 +6,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 
 import java.util.List;
 
@@ -19,4 +22,8 @@ public interface AgreementComputedProductRepository extends JpaRepository<Agreem
     void deleteByAgreementVersionId(Long agreementId);
 
     Page<AgreementComputedProduct> findByAgreementVersionId(Long agreementVersionId, Pageable pageable);
+
+    @Query("SELECT DISTINCT c.manufacturerId, c.manufacturerNameSnapshot FROM AgreementComputedProduct c WHERE c.agreementVersion.id = :versionId AND c.manufacturerId IS NOT NULL")
+    List<Object[]> findDistinctManufacturersByVersionId(@Param("versionId") Long versionId);
+
 }

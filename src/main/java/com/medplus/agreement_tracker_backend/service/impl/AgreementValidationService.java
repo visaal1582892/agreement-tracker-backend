@@ -11,6 +11,7 @@ import com.medplus.agreement_tracker_backend.dto.request.ProductScopeCombination
 import com.medplus.agreement_tracker_backend.dto.request.UpdateDraftRequest;
 import com.medplus.agreement_tracker_backend.dto.request.VendorSnapshotPayload;
 import com.medplus.agreement_tracker_backend.entity.Agreement;
+import com.medplus.agreement_tracker_backend.enums.RevisionType;
 import com.medplus.agreement_tracker_backend.entity.AgreementAssetPayoutPeriod;
 import com.medplus.agreement_tracker_backend.entity.AgreementVersion;
 import com.medplus.agreement_tracker_backend.enums.ApprovalStatus;
@@ -66,7 +67,7 @@ public class AgreementValidationService {
     private static final String RENEW_DATES_MSG = "Renewal start date must be after the current expiration date.";
     private static final String COMMERCIAL_DATE_CHANGE_MSG = "A new commercial structure must be provided because the agreement dates have been modified.";
 
-    public void validateStep1Fields(UpdateDraftRequest request) {
+    public void validateStep1Fields(UpdateDraftRequest request, AgreementVersion draft) {
         DraftDetailsPayload details = request.details();
         if (details == null || details.incomeTypeId() == null) {
             throw new BusinessException("Income type is required");
@@ -83,10 +84,23 @@ public class AgreementValidationService {
         if (details.expiryDate().isBefore(details.startDate())) {
             throw new BusinessException("Expiry date must be on or after start date");
         }
+
+        if (draft != null && draft.getRevisionType() == RevisionType.RENEWAL) {
+            AgreementVersion activeVersion = agreementVersionRepository
+                    .findByAgreementIdAndVersionNumber(draft.getAgreement().getId(), draft.getVersionNumber() - 1)
+                    .orElse(null);
+
+            if (activeVersion != null && activeVersion.getExpiryDate() != null) {
+                LocalDate minStart = activeVersion.getExpiryDate().plusDays(1);
+                if (details.startDate().isBefore(minStart)) {
+                    throw new BusinessException(RENEW_DATES_MSG + " (" + minStart + ")");
+                }
+            }
+        }
     }
 
-    public void validateStep2Fields(UpdateDraftRequest request) {
-        validateStep1Fields(request);
+    public void validateStep2Fields(UpdateDraftRequest request, AgreementVersion draft) {
+        validateStep1Fields(request, draft);
         DraftDetailsPayload details = request.details();
         if (details == null || details.incomeTypeId() == null) {
             throw new BusinessException("Income type is required");
