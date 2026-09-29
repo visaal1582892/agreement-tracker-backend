@@ -196,7 +196,11 @@ public class AgreementDraftMutationService {
                     && details.expiryDate().isBefore(details.startDate())) {
                 throw new BusinessException("Expiry date must be on or after start date");
             }
-            if (details.incomeTypeId() != null) {
+            if (version.getRevisionType() != null && details.incomeTypeId() != null) {
+                if (version.getIncomeType() == null || !version.getIncomeType().getId().equals(details.incomeTypeId())) {
+                    throw new BusinessException("Income Type cannot be changed during an edit or renewal");
+                }
+            } else if (version.getRevisionType() == null && details.incomeTypeId() != null) {
                 version.setIncomeType(incomeTypeRepository.findById(details.incomeTypeId())
                         .orElseThrow(() -> new ResourceNotFoundException("IncomeType", details.incomeTypeId())));
             }
@@ -338,12 +342,20 @@ public class AgreementDraftMutationService {
             return;
         }
         storeMappingRepository.deleteByAgreementVersionId(version.getId());
+        storeMappingRepository.flush();
+        
+        if (version.getStoreMappings() == null) {
+            version.setStoreMappings(new java.util.ArrayList<>());
+        } else {
+            version.getStoreMappings().clear();
+        }
+
         if (stores.isEmpty()) {
             return;
         }
         List<AgreementStoreMapping> mappings = new java.util.ArrayList<>();
         for (com.medplus.agreement_tracker_backend.dto.request.AgreementStoreDto store : stores) {
-            mappings.add(AgreementStoreMapping.builder()
+            AgreementStoreMapping mapping = AgreementStoreMapping.builder()
                     .agreementVersion(version)
                     .storeId(store.getStoreId())
                     .name(store.getName())
@@ -353,7 +365,9 @@ public class AgreementDraftMutationService {
                     .region2(store.getRegion2())
                     .region3(store.getRegion3())
                     .isCustom(store.isCustom())
-                    .build());
+                    .build();
+            version.getStoreMappings().add(mapping);
+            mappings.add(mapping);
         }
         storeMappingRepository.saveAll(mappings);
     }
@@ -870,15 +884,25 @@ public class AgreementDraftMutationService {
 
     public void replaceAssetPayoutPeriods(AgreementVersion version, List<AssetPayoutPeriodDto> periods) {
         assetPayoutPeriodRepository.deleteByAgreementVersionId(version.getId());
+        assetPayoutPeriodRepository.flush();
+        
+        if (version.getAssetPayoutPeriods() == null) {
+            version.setAssetPayoutPeriods(new java.util.ArrayList<>());
+        } else {
+            version.getAssetPayoutPeriods().clear();
+        }
+
         if (periods == null || periods.isEmpty()) {
             return;
         }
         for (AssetPayoutPeriodDto period : periods) {
-            assetPayoutPeriodRepository.save(AgreementAssetPayoutPeriod.builder()
+            AgreementAssetPayoutPeriod payoutPeriod = AgreementAssetPayoutPeriod.builder()
                     .agreementVersion(version)
                     .periodMonths(period.periodMonths())
                     .payoutPerStore(period.payoutPerStore())
-                    .build());
+                    .build();
+            version.getAssetPayoutPeriods().add(payoutPeriod);
+            assetPayoutPeriodRepository.save(payoutPeriod);
         }
     }
 

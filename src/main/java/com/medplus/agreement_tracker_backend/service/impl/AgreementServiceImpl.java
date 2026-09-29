@@ -94,6 +94,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -375,8 +376,15 @@ public class AgreementServiceImpl implements AgreementService {
         DraftAgreementItemRequest item = new DraftAgreementItemRequest(request.details(), request.commercials());
         AgreementVersion newVersion = agreementDraftMutationService.buildDraftVersion(item, owner, parent,
                 maxVersion + 1, currentUserId);
+        newVersion.setRevisionType(RevisionType.EDIT);
+        newVersion.setBaseVersionId(source.getId());
+        newVersion.setIncomeType(source.getIncomeType());
         newVersion = agreementVersionRepository.save(newVersion);
         agreementDraftMutationService.applyDraftFields(newVersion, request.details(), request.commercials());
+
+        // Enforce date locking for edits
+        newVersion.setStartDate(source.getStartDate());
+        newVersion.setExpiryDate(source.getExpiryDate());
 
         List<Long> vendorIds = request.vendorIds() != null ? request.vendorIds() : List.of();
         List<VendorSnapshotPayload> vendors = request.vendors() != null ? request.vendors() : List.of();
@@ -473,6 +481,16 @@ public class AgreementServiceImpl implements AgreementService {
         UpdateDraftRequest scrubbed = agreementDraftMutationService.scrubRequestForIncomeType(request, incomeTypeId);
 
         agreementDraftMutationService.applyDraftFields(version, scrubbed.details(), scrubbed.commercials());
+        
+        // Enforce date locking for edits
+        if (version.getRevisionType() == RevisionType.EDIT) {
+            AgreementVersion activeParent = agreementVersionRepository.findById(parent.getCurrentVersionId()).orElse(null);
+            if (activeParent != null) {
+                version.setStartDate(activeParent.getStartDate());
+                version.setExpiryDate(activeParent.getExpiryDate());
+            }
+        }
+        
         version.setUpdatedByUserId(currentUserId);
         version = agreementVersionRepository.save(version);
 
@@ -903,7 +921,18 @@ public class AgreementServiceImpl implements AgreementService {
         parent.setUpdatedByUserId(approverId);
         agreementRepository.save(parent);
 
-        if (version.getStartDate() == null || !version.getStartDate().isAfter(LocalDate.now())) {
+        if (version.getRevisionType() == RevisionType.EDIT && version.getBaseVersionId() != null) {
+            // Deterministically find the EXACT version that spawned this edit
+            Optional<AgreementVersion> exactParentOpt = agreementVersionRepository.findById(version.getBaseVersionId());
+            
+            if (exactParentOpt.isPresent()) {
+                AgreementVersion exactParent = exactParentOpt.get();
+                exactParent.setSupersededFromStatus(exactParent.getApprovalStatus());
+                exactParent.setApprovalStatus(ApprovalStatus.EDITED);
+                exactParent.setUpdatedByUserId(approverId);
+                agreementVersionRepository.save(exactParent);
+            }
+        } else if (version.getStartDate() == null || !version.getStartDate().isAfter(LocalDate.now())) {
             List<AgreementVersion> olderVersions = agreementVersionRepository.findOlderApprovedVersions(parent.getId(),
                     version.getVersionNumber());
             for (AgreementVersion oldVersion : olderVersions) {
@@ -1063,10 +1092,18 @@ public class AgreementServiceImpl implements AgreementService {
                 .startDate(source.getStartDate())
                 .expiryDate(source.getExpiryDate())
                 .approvalStatus(ApprovalStatus.DRAFT)
-                .revisionType(type)
+                .revisionType(type == RevisionType.REVISION ? source.getRevisionType() : type)
                 .notes(source.getNotes())
                 .paymentRealizationType(source.getPaymentRealizationType())
+                .assetType(source.getAssetType())
+                .assetCategory(source.getAssetCategory())
                 .build();
+
+        if (type == RevisionType.REVISION) {
+            newVersion.setBaseVersionId(source.getBaseVersionId());
+        } else {
+            newVersion.setBaseVersionId(source.getId());
+        }
 
         newVersion.setCreatedByUserId(currentUserId);
         newVersion = agreementVersionRepository.save(newVersion);
@@ -1126,12 +1163,20 @@ public class AgreementServiceImpl implements AgreementService {
                     "Cannot edit or renew while a version is PENDING_APPROVAL. Wait for the review to complete.");
         }
 
-        // Retrieve the source version to validate dates/rules
-        final Integer draftVersionNumber = draft.getVersionNumber();
-        AgreementVersion source = versions.stream()
-                .filter(v -> v.getVersionNumber().equals(draftVersionNumber - 1))
-                .findFirst()
-                .orElse(null);
+        // Retrieve the true base version from the database to validate dates/rules
+        AgreementVersion source = null;
+        if (draft.getBaseVersionId() != null) {
+            source = agreementVersionRepository.findById(draft.getBaseVersionId()).orElse(null);
+        }
+
+        // Fallback for legacy drafts created before baseVersionId was implemented
+        if (source == null && draft.getVersionNumber() != null) {
+            final Integer draftVersionNumber = draft.getVersionNumber();
+            source = versions.stream()
+                    .filter(v -> v.getVersionNumber().equals(draftVersionNumber - 1))
+                    .findFirst()
+                    .orElse(null);
+        }
 
         if (source != null) {
             if (expectedType == RevisionType.RENEWAL) {

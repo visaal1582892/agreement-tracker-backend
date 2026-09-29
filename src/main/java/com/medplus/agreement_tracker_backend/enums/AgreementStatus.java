@@ -16,5 +16,6 @@ public enum AgreementStatus {
     TERMINATED,
     IN_PROGRESS,
     SUPERSEDED,
-    UPCOMING
+    UPCOMING,
+    EDITED
 }

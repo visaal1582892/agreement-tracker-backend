@@ -13,6 +13,7 @@ import com.medplus.agreement_tracker_backend.enums.ProductScopeComputeStatus;
 import com.medplus.agreement_tracker_backend.enums.SlabValueType;
 import com.medplus.agreement_tracker_backend.enums.AssetCategory;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -40,6 +41,9 @@ public class AgreementVersion extends AuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "base_version_id")
+    private Long baseVersionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agreement_id", nullable = false)
@@ -167,26 +171,32 @@ public class AgreementVersion extends AuditableEntity {
     private String notes;
 
     @OneToMany(mappedBy = "agreementVersion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     @Builder.Default
     private List<AgreementSlab> slabs = new ArrayList<>();
 
     @OneToMany(mappedBy = "agreementVersion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     @Builder.Default
     private List<AgreementStoreMapping> storeMappings = new ArrayList<>();
 
     @OneToMany(mappedBy = "agreementVersion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     @Builder.Default
     private List<AgreementAssetPayoutPeriod> assetPayoutPeriods = new ArrayList<>();
 
     @OneToMany(mappedBy = "agreementVersion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     @Builder.Default
     private List<AgreementJbpCommercialPeriod> jbpCommercialPeriods = new ArrayList<>();
 
     @OneToMany(mappedBy = "agreementVersion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     @Builder.Default
     private List<AgreementDocument> documents = new ArrayList<>();
 
     @OneToMany(mappedBy = "agreementVersion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     @Builder.Default
     private List<AgreementLocation> locations = new ArrayList<>();
 }

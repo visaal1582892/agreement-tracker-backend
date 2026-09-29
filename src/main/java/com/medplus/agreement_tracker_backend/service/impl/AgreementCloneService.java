@@ -185,6 +185,7 @@ public class AgreementCloneService {
         AgreementVersion target = agreementVersionRepository.findById(targetVersionId)
                 .orElseThrow(() -> new ResourceNotFoundException("AgreementVersion", targetVersionId));
         assetPayoutPeriodRepository.deleteByAgreementVersionId(targetVersionId);
+        assetPayoutPeriodRepository.flush();
 
         List<AgreementAssetPayoutPeriod> sourcePeriods = assetPayoutPeriodRepository
                 .findByAgreementVersionIdOrderByPeriodMonthsAscIdAsc(sourceVersionId);

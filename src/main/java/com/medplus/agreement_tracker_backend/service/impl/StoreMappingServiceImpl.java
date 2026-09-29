@@ -401,6 +401,7 @@ public class StoreMappingServiceImpl implements StoreMappingService {
         AgreementVersion target = agreementVersionRepository.findById(targetVersionId)
                 .orElseThrow(() -> new ResourceNotFoundException("AgreementVersion", targetVersionId));
         mappingRepository.deleteByAgreementVersionId(targetVersionId);
+        mappingRepository.flush();
 
         List<AgreementStoreMapping> sourceMappings =
                 mappingRepository.findByAgreementVersionIdOrderByStoreIdAsc(sourceVersionId);
@@ -427,6 +428,7 @@ public class StoreMappingServiceImpl implements StoreMappingService {
         AgreementVersion target = agreementVersionRepository.findById(targetVersionId)
                 .orElseThrow(() -> new ResourceNotFoundException("AgreementVersion", targetVersionId));
         mappingRepository.deleteByAgreementVersionId(targetVersionId);
+        mappingRepository.flush();
         if (storeMappings.isEmpty()) {
             return;
         }

@@ -85,13 +85,12 @@ public class AgreementValidationService {
             throw new BusinessException("Expiry date must be on or after start date");
         }
 
-        if (draft != null && draft.getRevisionType() == RevisionType.RENEWAL) {
-            AgreementVersion activeVersion = agreementVersionRepository
-                    .findByAgreementIdAndVersionNumber(draft.getAgreement().getId(), draft.getVersionNumber() - 1)
-                    .orElse(null);
+        if (draft != null && draft.getRevisionType() == RevisionType.RENEWAL && draft.getBaseVersionId() != null) {
+            AgreementVersion baseVersion = agreementVersionRepository.findById(draft.getBaseVersionId())
+                    .orElseThrow();
 
-            if (activeVersion != null && activeVersion.getExpiryDate() != null) {
-                LocalDate minStart = activeVersion.getExpiryDate().plusDays(1);
+            if (baseVersion.getExpiryDate() != null) {
+                LocalDate minStart = baseVersion.getExpiryDate().plusDays(1);
                 if (details.startDate().isBefore(minStart)) {
                     throw new BusinessException(RENEW_DATES_MSG + " (" + minStart + ")");
                 }
@@ -118,9 +117,7 @@ public class AgreementValidationService {
             validateProductsAndVendorsStep2(request);
         }
         validateSettlementRouting(details, request.vendorIds(), isAssetRentalIncomeType(incomeTypeId));
-        if (!isAssetRentalIncomeType(incomeTypeId)) {
-            validateDocumentsPresent(details);
-        }
+        validateDocumentsPresent(details);
     }
 
     public void validateDocumentsPresent(DraftDetailsPayload details) {
@@ -426,6 +423,9 @@ public class AgreementValidationService {
         if (version.getIncomeType() != null
                 && isAssetRentalIncomeType(version.getIncomeType().getId())) {
             validateCompleteAssetRental(version, agreementName);
+            if (documentRepository.findByAgreementVersionIdAndIsActiveTrue(version.getId()).isEmpty()) {
+                throw validationFailure(agreementName, "At least one document is required.");
+            }
             // Invoice Vendor UI is currently disabled in the wizard — do not block submit
             // on it.
             return;

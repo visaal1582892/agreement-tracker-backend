@@ -26,6 +26,9 @@ public class AgreementStatusResolver {
         if (version.getApprovalStatus() == ApprovalStatus.SUPERSEDED) {
             return AgreementStatus.SUPERSEDED;
         }
+        if (version.getApprovalStatus() == ApprovalStatus.EDITED) {
+            return AgreementStatus.EDITED;
+        }
         if (version.getApprovalStatus() == ApprovalStatus.APPROVED) {
             LocalDate now = LocalDate.now();
             if (version.getStartDate() != null && version.getStartDate().isAfter(now)) {
