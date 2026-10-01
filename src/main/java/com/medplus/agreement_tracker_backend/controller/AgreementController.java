@@ -58,7 +58,7 @@ public class AgreementController {
             @RequestParam(required = false) String agreementName,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String ownerName,
-            @RequestParam(required = false) Long vendorId,
+            @RequestParam(required = false) String vendorName,
             @RequestParam(required = false) Long incomeTypeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDateTo,
@@ -84,7 +84,7 @@ public class AgreementController {
         return ResponseEntity.ok(agreementService.getAllAgreements(
                 pageable, principal.getId(), effectiveScope, canViewAll,
                 agreementGroupId, agreementGroupName,
-                agreementName, status, ownerName, vendorId, incomeTypeId,
+                agreementName, status, ownerName, vendorName, incomeTypeId,
                 startDateFrom, startDateTo, endDateFrom, endDateTo));
     }
 

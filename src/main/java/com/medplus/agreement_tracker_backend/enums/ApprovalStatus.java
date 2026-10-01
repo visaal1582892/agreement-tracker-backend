@@ -6,5 +6,6 @@ public enum ApprovalStatus {
     APPROVED,
     REJECTED,
     SUPERSEDED,
-    EDITED
+    EDITED,
+    TERMINATED
 }

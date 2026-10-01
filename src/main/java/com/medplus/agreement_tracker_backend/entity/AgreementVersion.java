@@ -199,4 +199,9 @@ public class AgreementVersion extends AuditableEntity {
     @BatchSize(size = 50)
     @Builder.Default
     private List<AgreementLocation> locations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "agreementVersion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
+    @Builder.Default
+    private List<AgreementVendor> vendors = new ArrayList<>();
 }

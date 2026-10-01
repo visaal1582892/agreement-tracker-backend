@@ -38,7 +38,7 @@ public interface AgreementService {
     Page<AgreementResponse> getAllAgreements(Pageable pageable, Long currentUserId, String scope, boolean canViewAll,
                                            Long agreementGroupId, String agreementGroupName,
                                            String agreementName, String status, String ownerName,
-                                           Long vendorId, Long incomeTypeId,
+                                           String vendorName, Long incomeTypeId,
                                            LocalDate startDateFrom, LocalDate startDateTo,
                                            LocalDate endDateFrom, LocalDate endDateTo);
 

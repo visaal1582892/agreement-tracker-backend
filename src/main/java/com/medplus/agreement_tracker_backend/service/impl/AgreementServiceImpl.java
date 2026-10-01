@@ -60,7 +60,7 @@ import com.medplus.agreement_tracker_backend.repository.AgreementStoreMappingRep
 import com.medplus.agreement_tracker_backend.repository.AgreementTimePeriodRepository;
 import com.medplus.agreement_tracker_backend.integration.ProductMasterIntegrationService;
 import com.medplus.agreement_tracker_backend.repository.AgreementRepository;
-import com.medplus.agreement_tracker_backend.repository.AgreementSpec;
+import com.medplus.agreement_tracker_backend.repository.AgreementVersionSpec;
 import com.medplus.agreement_tracker_backend.repository.AgreementTypeRepository;
 import com.medplus.agreement_tracker_backend.repository.AgreementVendorRepository;
 import com.medplus.agreement_tracker_backend.repository.AgreementVersionRepository;
@@ -720,63 +720,25 @@ public class AgreementServiceImpl implements AgreementService {
     public Page<AgreementResponse> getAllAgreements(Pageable pageable, Long currentUserId, String scope,
             boolean canViewAllControllerParam, Long agreementGroupId,
             String agreementGroupName, String agreementName,
-            String status, String ownerName, Long vendorId, Long incomeTypeId,
+            String status, String ownerName, String vendorName, Long incomeTypeId,
             LocalDate startDateFrom, LocalDate startDateTo,
             LocalDate endDateFrom, LocalDate endDateTo) {
         Pageable mappedPageable = agreementMapperService.mapAgreementPageable(pageable);
-        var filterSpec = AgreementSpec.withFilters(
-                agreementGroupId, agreementGroupName,
-                agreementName, status, ownerName, vendorId, incomeTypeId,
-                startDateFrom, startDateTo, endDateFrom, endDateTo);
-
+        
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         boolean canViewAll = auth != null && auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("AGREEMENT_VIEW_ALL") || a.getAuthority().equals("DRAFT_VIEW_ALL"));
 
-        if (!"DRAFT".equalsIgnoreCase(status)) {
-            filterSpec = filterSpec.and(AgreementSpec.hasNonDraftVersion());
-        }
+        var versionSpec = AgreementVersionSpec.withFilters(
+                currentUserId, canViewAll, scope,
+                agreementGroupId, agreementGroupName,
+                agreementName, status, ownerName, vendorName, incomeTypeId,
+                startDateFrom, startDateTo, endDateFrom, endDateTo);
 
-        if ("ALL".equalsIgnoreCase(scope) && canViewAll) {
-            // Admin viewing all drafts. Do NOT append ownedBy() or hasNonDraftVersion().
-        } else {
-            filterSpec = filterSpec.and(AgreementSpec.ownedBy(currentUserId));
-        }
+        Page<AgreementVersion> versionPage = agreementVersionRepository.findAll(versionSpec, mappedPageable);
 
-        Page<Agreement> parentPage = agreementRepository.findAll(filterSpec, mappedPageable);
-
-        List<Long> agreementIds = parentPage.getContent().stream().map(Agreement::getId).toList();
-        if (agreementIds.isEmpty()) {
-            return parentPage.map(agreementMapperService::toParentResponseEmpty);
-        }
-
-        return parentPage.map(agreement -> {
-            AgreementVersion displayVersion = resolveDisplayVersion(agreement, status);
-            List<AgreementVendor> vendors = displayVersion != null
-                    ? vendorRepository.findByAgreementVersionIdIn(List.of(displayVersion.getId()))
-                    : List.of();
-            return displayVersion != null ? agreementMapperService.toParentResponse(agreement, displayVersion, vendors)
-                    : agreementMapperService.toParentResponseEmpty(agreement);
-        });
-    }
-
-    private AgreementVersion resolveDisplayVersion(Agreement agreement, String filterStatus) {
-        List<AgreementVersion> versions = agreementVersionRepository.findByAgreementId(agreement.getId());
-
-        if ("DRAFT".equalsIgnoreCase(filterStatus)) {
-            return versions.stream()
-                .max(java.util.Comparator.comparing(AgreementVersion::getVersionNumber))
-                .orElse(null);
-        }
-
-        if (agreement.getCurrentVersionId() != null) {
-            return agreementVersionRepository.findById(agreement.getCurrentVersionId()).orElse(null);
-        }
-
-        return versions.stream()
-            .filter(v -> v.getApprovalStatus() != ApprovalStatus.DRAFT)
-            .max(java.util.Comparator.comparing(AgreementVersion::getVersionNumber))
-            .orElse(null);
+        return versionPage.map(version -> agreementMapperService.toParentResponse(
+                version.getAgreement(), version, version.getVendors()));
     }
 
     @Override
@@ -984,6 +946,7 @@ public class AgreementServiceImpl implements AgreementService {
 
         version.setTerminationDate(request.terminationDate());
         version.setTerminationReason(request.terminationReason());
+        version.setApprovalStatus(ApprovalStatus.TERMINATED);
         version.setUpdatedByUserId(currentUserId);
         version = agreementVersionRepository.save(version);
 
