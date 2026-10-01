@@ -63,7 +63,7 @@ public class UserController {
     }
 
     @GetMapping("/lookup")
-    @PreAuthorize("hasAnyAuthority('ADMIN_USERS', 'AGREEMENT_EDIT')")
+    @PreAuthorize("hasAnyAuthority('ADMIN_USERS', 'AGREEMENT_TRANSFER', 'AGREEMENT_EDIT_MY', 'AGREEMENT_EDIT_ALL')")
     public ResponseEntity<List<UserResponse>> lookup(@RequestParam(required = false, defaultValue = "") String q) {
         return ResponseEntity.ok(userService.searchUsers(q));
     }

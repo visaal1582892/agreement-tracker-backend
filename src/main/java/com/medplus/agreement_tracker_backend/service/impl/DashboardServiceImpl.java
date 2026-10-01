@@ -34,12 +34,12 @@ public class DashboardServiceImpl implements DashboardService {
         Long ownerScope = resolveAgreementOwnerScope(principal);
 
         Long draftsCount = null;
-        if (hasAnyRight(principal, RightCode.AGREEMENT_CREATE, RightCode.AGREEMENT_EDIT)) {
+        if (hasAnyRight(principal, RightCode.AGREEMENT_CREATE, RightCode.DRAFT_EDIT_MY, RightCode.DRAFT_EDIT_ALL, RightCode.AGREEMENT_EDIT_MY, RightCode.AGREEMENT_EDIT_ALL)) {
             draftsCount = agreementVersionRepository.countDraftsByOwner(principal.getId());
         }
 
         Long requiresMyActionCount = null;
-        if (principal.hasRight(RightCode.AGREEMENT_EDIT.name())) {
+        if (hasAnyRight(principal, RightCode.AGREEMENT_EDIT_MY, RightCode.AGREEMENT_EDIT_ALL, RightCode.DRAFT_EDIT_MY, RightCode.DRAFT_EDIT_ALL)) {
             requiresMyActionCount = agreementVersionRepository.countRejectedByOwner(principal.getId());
         }
 
@@ -121,7 +121,7 @@ public class DashboardServiceImpl implements DashboardService {
         if (principal.hasRight(RightCode.AGREEMENT_VIEW_ALL.name())) {
             return null;
         }
-        if (principal.hasRight(RightCode.AGREEMENT_VIEW.name())) {
+        if (principal.hasRight(RightCode.AGREEMENT_VIEW_MY.name())) {
             return principal.getId();
         }
         return null;

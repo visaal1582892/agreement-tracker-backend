@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT;
+import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT_AGREEMENT_VERSION_ID;
 import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_VIEW;
 
 @RestController
@@ -31,7 +31,7 @@ public class CommercialController {
     private final CommercialService commercialService;
 
     @PostMapping("/template")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<byte[]> generateTemplate(
             @PathVariable Long agreementVersionId,
             @Valid @RequestBody CommercialTemplateRequest request,
@@ -47,7 +47,7 @@ public class CommercialController {
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<CommercialUploadResponse> uploadTargets(
             @PathVariable Long agreementVersionId,
             @RequestParam("file") MultipartFile file,
@@ -66,7 +66,7 @@ public class CommercialController {
     }
 
     @PutMapping("/targets")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<Void> upsertTarget(
             @PathVariable Long agreementVersionId,
             @Valid @RequestBody UpsertTargetRequest request,
@@ -76,7 +76,7 @@ public class CommercialController {
     }
 
     @PutMapping("/type-switch")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<Void> switchCommercialType(
             @PathVariable Long agreementVersionId,
             @Valid @RequestBody CommercialTypeSwitchRequest request,

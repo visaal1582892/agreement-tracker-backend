@@ -26,7 +26,7 @@ public class AgreementProductScopeController {
     private final AgreementComputedProductRepository computedProductRepository;
 
     @PostMapping("/count")
-    @PreAuthorize("hasAnyAuthority('AGREEMENT_CREATE', 'AGREEMENT_EDIT', 'AGREEMENT_VIEW', 'AGREEMENT_VIEW_ALL')")
+    @PreAuthorize("hasAnyAuthority('AGREEMENT_CREATE', 'AGREEMENT_EDIT_MY', 'AGREEMENT_EDIT_ALL', 'AGREEMENT_VIEW_MY', 'AGREEMENT_VIEW_ALL', 'DRAFT_VIEW_MY', 'DRAFT_VIEW_ALL')")
     public ResponseEntity<ProductScopeCountResponse> countScopedProducts(
             @Valid @RequestBody ProductRulesPayload request) {
         long count = agreementProductScopeComputeService.countScopedProducts(

@@ -51,7 +51,7 @@ public class AgreementVersionController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(DRAFT_EDIT)
     public ResponseEntity<AgreementVersionResponse> updateDraft(
             @PathVariable Long id,
             @Validated(DraftValidation.class) @RequestBody UpdateDraftRequest request,
@@ -64,7 +64,7 @@ public class AgreementVersionController {
     }
 
     @DeleteMapping("/{id}/discard")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(DRAFT_DELETE_V)
     public ResponseEntity<Void> discardDraft(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -73,7 +73,7 @@ public class AgreementVersionController {
     }
 
     @PostMapping("/{id}/init-edit")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_ID)
     public ResponseEntity<AgreementVersionResponse> initEdit(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -81,7 +81,7 @@ public class AgreementVersionController {
     }
 
     @PostMapping("/{id}/init-renew")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_RENEW)
     public ResponseEntity<AgreementVersionResponse> initRenew(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -89,7 +89,7 @@ public class AgreementVersionController {
     }
 
     @PostMapping("/{id}/init-revise")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_REVISE)
     public ResponseEntity<AgreementVersionResponse> initRevise(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -97,7 +97,7 @@ public class AgreementVersionController {
     }
 
     @PostMapping("/{id}/clone")
-    @PreAuthorize(AGREEMENT_CREATE)
+    @PreAuthorize(AGREEMENT_CLONE)
     public ResponseEntity<AgreementVersionResponse> cloneAgreement(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -106,7 +106,7 @@ public class AgreementVersionController {
     }
 
     @PutMapping("/{id}/submit-edit")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_SUBMIT_V)
     public ResponseEntity<AgreementVersionResponse> submitEdit(
             @PathVariable Long id,
             @RequestBody(required = false) SubmitForApprovalRequest request,
@@ -116,7 +116,7 @@ public class AgreementVersionController {
     }
 
     @PutMapping("/{id}/submit-renew")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_SUBMIT_V)
     public ResponseEntity<AgreementVersionResponse> submitRenew(
             @PathVariable Long id,
             @RequestBody(required = false) SubmitForApprovalRequest request,
@@ -126,7 +126,7 @@ public class AgreementVersionController {
     }
 
     @PutMapping("/{id}/submit-revise")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_SUBMIT_V)
     public ResponseEntity<AgreementVersionResponse> submitRevise(
             @PathVariable Long id,
             @RequestBody(required = false) SubmitForApprovalRequest request,
@@ -146,7 +146,7 @@ public class AgreementVersionController {
     }
 
     @PostMapping("/{id}/reject")
-    @PreAuthorize(AGREEMENT_APPROVE)
+    @PreAuthorize(AGREEMENT_REJECT)
     public ResponseEntity<AgreementVersionResponse> reject(
             @PathVariable Long id,
             @Valid @RequestBody ApprovalActionRequest request,
@@ -155,7 +155,7 @@ public class AgreementVersionController {
     }
 
     @PostMapping("/{id}/terminate")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_TERMINATE_V)
     public ResponseEntity<AgreementVersionResponse> terminate(
             @PathVariable Long id,
             @Valid @RequestBody TerminateAgreementRequest request,
@@ -178,7 +178,7 @@ public class AgreementVersionController {
     }
 
     @PutMapping("/{id}/transfer")
-    @PreAuthorize("hasAnyAuthority('ADMIN_USERS', 'AGREEMENT_EDIT')")
+    @PreAuthorize("hasAnyAuthority('ADMIN_USERS', 'AGREEMENT_TRANSFER')")
     public ResponseEntity<AgreementVersionResponse> transferOwnership(
             @PathVariable Long id,
             @Valid @RequestBody TransferOwnershipRequest request,
@@ -189,7 +189,7 @@ public class AgreementVersionController {
     }
 
     @GetMapping("/{id}/computed-products")
-    @PreAuthorize("hasAnyAuthority('AGREEMENT_CREATE', 'AGREEMENT_EDIT', 'AGREEMENT_VIEW', 'AGREEMENT_VIEW_ALL')")
+    @PreAuthorize("hasAnyAuthority('AGREEMENT_CREATE', 'AGREEMENT_VIEW_MY', 'AGREEMENT_VIEW_ALL', 'DRAFT_VIEW_MY', 'DRAFT_VIEW_ALL') or " + AGREEMENT_EDIT_VERSION_ID)
     public ResponseEntity<Page<AgreementComputedProduct>> getComputedProducts(
             @PathVariable Long id,
             @RequestParam(required = false) String productId,

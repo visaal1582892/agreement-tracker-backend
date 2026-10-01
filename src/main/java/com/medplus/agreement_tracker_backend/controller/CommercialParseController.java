@@ -31,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT;
+import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT_SOURCE_VERSION_ID;
 
 /**
  * Stateless commercial Excel parse/export for Edit/Renew (no DRAFT writes).
@@ -48,7 +48,7 @@ public class CommercialParseController {
     private final ObjectMapper objectMapper;
 
     @PostMapping("/jbp-preview/time-periods")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_SOURCE_VERSION_ID)
     public ResponseEntity<List<TimePeriodSummaryResponse>> listPreviewPeriods(
             @RequestParam Long sourceVersionId,
             @RequestParam PayoutFrequency frequency,
@@ -65,7 +65,7 @@ public class CommercialParseController {
     }
 
     @PostMapping("/jbp-preview/template")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_SOURCE_VERSION_ID)
     public ResponseEntity<byte[]> generatePreviewTemplate(
             @RequestParam Long sourceVersionId,
             @Valid @RequestBody JbpStatelessPreviewRequest request,
@@ -80,7 +80,7 @@ public class CommercialParseController {
     }
 
     @GetMapping("/jbp-template-export")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_SOURCE_VERSION_ID)
     public ResponseEntity<byte[]> exportJbpTemplate(
             @RequestParam Long sourceVersionId,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -94,7 +94,7 @@ public class CommercialParseController {
     }
 
     @PostMapping(value = "/parse-jbp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_SOURCE_VERSION_ID)
     public ResponseEntity<JbpStagedWorkbookDto> parseJbp(
             @RequestParam Long sourceVersionId,
             @RequestPart("file") MultipartFile file,
@@ -110,7 +110,7 @@ public class CommercialParseController {
     }
 
     @GetMapping("/parse-stores/template")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_SOURCE_VERSION_ID)
     public ResponseEntity<byte[]> storeParseTemplate() {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=store-mapping-template.xlsx")
@@ -120,7 +120,7 @@ public class CommercialParseController {
     }
 
     @PostMapping(value = "/parse-stores", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_SOURCE_VERSION_ID)
     public ResponseEntity<ParsedStoreMappingsDto> parseStores(
             @RequestParam Long sourceVersionId,
             @RequestPart("file") MultipartFile file,

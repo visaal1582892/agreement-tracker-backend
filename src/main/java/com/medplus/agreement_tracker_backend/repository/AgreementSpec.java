@@ -19,7 +19,8 @@ import java.util.List;
 
 public final class AgreementSpec {
 
-    private AgreementSpec() {}
+    private AgreementSpec() {
+    }
 
     public static Specification<Agreement> withFilters(
             Long agreementGroupId, String agreementGroupName,
@@ -68,26 +69,22 @@ public final class AgreementSpec {
         return (root, query, cb) -> cb.equal(root.get("owner").get("id"), userId);
     }
 
-    public static Specification<Agreement> draftVisibleTo(Long userId) {
+    public static Specification<Agreement> hasNonDraftVersion() {
         return (root, query, cb) -> {
-            Subquery<Long> hidden = query.subquery(Long.class);
-            Root<AgreementVersion> av = hidden.from(AgreementVersion.class);
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<AgreementVersion> av = subquery.from(AgreementVersion.class);
 
-            Subquery<Integer> maxVer = query.subquery(Integer.class);
-            Root<AgreementVersion> avMax = maxVer.from(AgreementVersion.class);
-            maxVer.select(cb.max(avMax.get("versionNumber")))
-                    .where(cb.equal(avMax.get("agreement").get("id"), root.get("id")));
-
-            hidden.select(av.get("agreement").get("id"))
+            subquery.select(av.get("agreement").get("id"))
                     .where(
                             cb.equal(av.get("agreement").get("id"), root.get("id")),
-                            cb.equal(av.get("versionNumber"), maxVer),
-                            cb.equal(av.get("approvalStatus"), ApprovalStatus.DRAFT),
-                            cb.notEqual(root.get("owner").get("id"), userId),
-                            cb.isNull(root.get("currentVersionId"))
-                    );
+                            av.get("approvalStatus").in(
+                                    ApprovalStatus.PENDING_APPROVAL,
+                                    ApprovalStatus.APPROVED,
+                                    ApprovalStatus.REJECTED,
+                                    ApprovalStatus.SUPERSEDED,
+                                    ApprovalStatus.EDITED));
 
-            return cb.not(root.get("id").in(hidden));
+            return root.get("id").in(subquery);
         };
     }
 
@@ -99,16 +96,14 @@ public final class AgreementSpec {
         if (!StringUtils.hasText(value)) {
             return null;
         }
-        return (root, query, cb) ->
-                cb.like(cb.lower(root.get("agreementName")), "%" + value.toLowerCase() + "%");
+        return (root, query, cb) -> cb.like(cb.lower(root.get("agreementName")), "%" + value.toLowerCase() + "%");
     }
 
     private static Specification<Agreement> hasAgreementGroupId(Long agreementGroupId) {
         if (agreementGroupId == null) {
             return null;
         }
-        return (root, query, cb) ->
-                cb.equal(root.get("agreementGroup").get("id"), agreementGroupId);
+        return (root, query, cb) -> cb.equal(root.get("agreementGroup").get("id"), agreementGroupId);
     }
 
     private static Specification<Agreement> hasAgreementGroupName(String value) {
@@ -136,7 +131,7 @@ public final class AgreementSpec {
             Subquery<Long> sub = query.subquery(Long.class);
             Root<AgreementVersion> av = sub.from(AgreementVersion.class);
             sub.select(av.get("agreement").get("id"))
-               .where(cb.equal(av.get("approvalStatus"), finalStatus));
+                    .where(cb.equal(av.get("approvalStatus"), finalStatus));
             return root.get("id").in(sub);
         };
     }
@@ -160,7 +155,7 @@ public final class AgreementSpec {
             Root<AgreementVendor> av = sub.from(AgreementVendor.class);
             Join<AgreementVendor, AgreementVersion> version = av.join("agreementVersion", JoinType.INNER);
             sub.select(version.get("agreement").get("id"))
-               .where(cb.equal(av.get("vendorId"), vendorId));
+                    .where(cb.equal(av.get("vendorId"), vendorId));
             return root.get("id").in(sub);
         };
     }
@@ -173,7 +168,7 @@ public final class AgreementSpec {
             Subquery<Long> sub = query.subquery(Long.class);
             Root<AgreementVersion> av = sub.from(AgreementVersion.class);
             sub.select(av.get("agreement").get("id"))
-               .where(cb.equal(av.get("incomeType").get("id"), incomeTypeId));
+                    .where(cb.equal(av.get("incomeType").get("id"), incomeTypeId));
             return root.get("id").in(sub);
         };
     }
@@ -199,9 +194,7 @@ public final class AgreementSpec {
                     cb.equal(av.get("id"), root.get("currentVersionId")),
                     cb.and(
                             cb.isNull(root.get("currentVersionId")),
-                            cb.equal(av.get("versionNumber"), maxVer)
-                    )
-            ));
+                            cb.equal(av.get("versionNumber"), maxVer))));
 
             if (startDateFrom != null) {
                 predicates.add(cb.greaterThanOrEqualTo(av.get("startDate"), startDateFrom));

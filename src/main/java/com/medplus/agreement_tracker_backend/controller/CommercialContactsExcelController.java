@@ -15,7 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT;
+import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT_AGREEMENT_VERSION_ID;
 import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_VIEW;
 
 @RestController
@@ -26,7 +26,7 @@ public class CommercialContactsExcelController {
     private final CommercialContactsService commercialContactsService;
 
     @GetMapping("/contacts-template")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<byte[]> downloadContactsTemplate(
             @PathVariable Long agreementVersionId,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -39,7 +39,7 @@ public class CommercialContactsExcelController {
     }
 
     @PostMapping(value = "/contacts-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<StagedCutoffMatrixResponse> uploadContactsCutoffs(
             @PathVariable Long agreementVersionId,
             @RequestParam("file") MultipartFile file,
@@ -49,7 +49,7 @@ public class CommercialContactsExcelController {
     }
 
     @PutMapping("/commit-cutoffs")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<Void> commitContactsCutoffs(
             @PathVariable Long agreementVersionId,
             @Valid @RequestBody CommitCutoffsRequest request,
@@ -67,7 +67,7 @@ public class CommercialContactsExcelController {
     }
 
     @DeleteMapping("/commercial-structure-data")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<Void> purgeCommercialStructureData(
             @PathVariable Long agreementVersionId,
             @AuthenticationPrincipal UserPrincipal principal) {

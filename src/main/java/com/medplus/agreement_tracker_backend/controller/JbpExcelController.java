@@ -29,7 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT;
+import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT_VERSION_ID;
 import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_VIEW;
 
 @RestController
@@ -42,59 +42,59 @@ public class JbpExcelController {
     private final JbpCommercialService jbpCommercialService;
 
     @PostMapping("/jbp-template")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_VERSION_ID)
     public ResponseEntity<byte[]> downloadJbpTemplate(
-            @PathVariable Long agreementVersionId,
+            @PathVariable("agreementVersionId") Long versionId,
             @Valid @RequestBody JbpWorkbookRequest request,
             @RequestParam(required = false) Integer startMonth,
             @AuthenticationPrincipal UserPrincipal principal) {
         byte[] file = jbpExcelGeneratorService.generateWorkbook(
-                agreementVersionId, request, principal.getId(), startMonth);
+                versionId, request, principal.getId(), startMonth);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=jbp-workbook-" + agreementVersionId + ".xlsx")
+                        "attachment; filename=jbp-workbook-" + versionId + ".xlsx")
                 .contentType(MediaType.parseMediaType(
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(file);
     }
 
     @PostMapping(value = "/jbp-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_VERSION_ID)
     public ResponseEntity<JbpStagedWorkbookDto> uploadJbpWorkbook(
-            @PathVariable Long agreementVersionId,
+            @PathVariable("agreementVersionId") Long versionId,
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(
-                jbpExcelParserService.parseUpload(agreementVersionId, file, principal.getId()));
+                jbpExcelParserService.parseUpload(versionId, file, principal.getId()));
     }
 
     @PutMapping("/commit-jbp")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_VERSION_ID)
     public ResponseEntity<Void> commitJbpStructure(
-            @PathVariable Long agreementVersionId,
+            @PathVariable("agreementVersionId") Long versionId,
             @Valid @RequestBody CommitJbpRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
-        jbpCommercialService.commitJbpStructure(agreementVersionId, request, principal.getId());
+        jbpCommercialService.commitJbpStructure(versionId, request, principal.getId());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/jbp-structure")
-    @PreAuthorize("hasAnyAuthority('AGREEMENT_EDIT', 'AGREEMENT_VIEW', 'AGREEMENT_VIEW_ALL')")
+    @PreAuthorize(AGREEMENT_EDIT_VERSION_ID + " or " + AGREEMENT_VIEW)
     public ResponseEntity<JbpStructureHydrationResponse> getJbpStructure(
-            @PathVariable Long agreementVersionId,
+            @PathVariable("agreementVersionId") Long versionId,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(
-                jbpCommercialService.getJbpStructure(agreementVersionId, principal.getId()));
+                jbpCommercialService.getJbpStructure(versionId, principal.getId()));
     }
 
     @GetMapping("/jbp-time-periods")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_VERSION_ID + " or " + AGREEMENT_VIEW)
     public ResponseEntity<List<TimePeriodSummaryResponse>> listJbpTimePeriods(
-            @PathVariable Long agreementVersionId,
+            @PathVariable("agreementVersionId") Long versionId,
             @RequestParam PayoutFrequency frequency,
             @RequestParam(required = false) Integer financialYearStartMonth,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(jbpCommercialService.listAvailablePeriods(
-                agreementVersionId, frequency, principal.getId(), financialYearStartMonth));
+                versionId, frequency, principal.getId(), financialYearStartMonth));
     }
 }

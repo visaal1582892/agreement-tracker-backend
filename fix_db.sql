@@ -1,2 +1,0 @@
-TRUNCATE TABLE agreement_monthly_payable_rollup;
-TRUNCATE TABLE agreement_actual_metrics;

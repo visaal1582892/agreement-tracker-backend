@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT;
+import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT_AGREEMENT_VERSION_ID;
 import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_VIEW;
 
 @RestController
@@ -35,7 +35,7 @@ public class AgreementSlabController {
     }
 
     @PostMapping
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<AgreementSlabResponse> createSlab(
             @PathVariable Long agreementVersionId,
             @Valid @RequestBody SlabDTO request,
@@ -45,7 +45,7 @@ public class AgreementSlabController {
     }
 
     @PutMapping("/{slabId}")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<AgreementSlabResponse> updateSlab(
             @PathVariable Long agreementVersionId,
             @PathVariable Long slabId,
@@ -56,7 +56,7 @@ public class AgreementSlabController {
     }
 
     @DeleteMapping("/{slabId}")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_VERSION_ID)
     public ResponseEntity<Void> deleteSlab(
             @PathVariable Long agreementVersionId,
             @PathVariable Long slabId,

@@ -30,7 +30,7 @@ public class AgreementActionRequestController {
     private final AgreementService agreementService;
 
     @PostMapping("/agreement-versions/{agreementVersionId}/requests/transfer")
-    @PreAuthorize("hasAnyAuthority('ADMIN_USERS', 'AGREEMENT_EDIT')")
+    @PreAuthorize("hasAnyAuthority('ADMIN_USERS', 'AGREEMENT_TRANSFER')")
     public ResponseEntity<?> initiateTransfer(
             @PathVariable Long agreementVersionId,
             @Valid @RequestBody InitiateTransferRequest request,
@@ -46,7 +46,7 @@ public class AgreementActionRequestController {
     }
 
     @PostMapping("/agreement-versions/{agreementVersionId}/requests/terminate")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_TERMINATE)
     public ResponseEntity<AgreementActionRequestResponse> initiateTerminate(
             @PathVariable Long agreementVersionId,
             @Valid @RequestBody InitiateTerminateRequest request,

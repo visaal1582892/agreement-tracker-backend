@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT;
+import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT_VERSION_ID;
 import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_VIEW;
 
 @RestController
@@ -31,7 +31,7 @@ public class StoreMappingController {
     private final StoreMappingService storeMappingService;
 
     @GetMapping("/template")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_VERSION_ID)
     public ResponseEntity<byte[]> downloadTemplate(@PathVariable Long versionId) {
         byte[] template = storeMappingService.generateTemplate();
         return ResponseEntity.ok()
@@ -52,7 +52,7 @@ public class StoreMappingController {
     }
 
     @PostMapping(value = "/parse-stateless", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_VERSION_ID)
     public ResponseEntity<com.medplus.agreement_tracker_backend.dto.response.ParsedStoreMappingsDto> parseMappingsStateless(
             @PathVariable Long versionId,
             @RequestParam("file") MultipartFile file,

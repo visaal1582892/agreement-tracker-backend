@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Objects;
 
-import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_EDIT;
+import static com.medplus.agreement_tracker_backend.security.RightExpressions.ASSET_UPLOAD;
 import static com.medplus.agreement_tracker_backend.security.RightExpressions.AGREEMENT_VIEW;
 
 @RestController
@@ -31,7 +31,7 @@ public class FileUploadController {
     private final FileUploadService fileUploadService;
 
     @PostMapping(value = "/asset", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(ASSET_UPLOAD)
     public ResponseEntity<AssetUploadResponse> uploadAssets(@RequestParam("files") List<MultipartFile> files) {
         AssetUploadResponse response = fileUploadService.uploadAssets(files);
         if (isAllFailed(response)) {

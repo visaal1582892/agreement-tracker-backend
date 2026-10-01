@@ -77,27 +77,27 @@ public class AgreementMapperService {
         private final AgreementStatusResolver statusResolver;
 
         // private final TransactionTemplate groupSubmitTransactionTemplate;
-        
-    public AgreementVersionSummaryResponse toVersionSummaryResponse(AgreementVersion version) {
-        return AgreementVersionSummaryResponse.builder()
-                .id(version.getId())
-                .agreementId(version.getAgreement().getId())
-                .agreementName(version.getAgreement().getAgreementName())
-                .versionNumber(version.getVersionNumber())
-                .revisionType(version.getRevisionType())
-                .ownerId(version.getOwner().getId())
-                .ownerName(version.getOwner().getFullName())
-                .startDate(version.getStartDate())
-                .expiryDate(version.getExpiryDate())
-                .approvalStatus(version.getApprovalStatus())
-                .computedStatus(statusResolver.resolve(version))
-                .terminalStatus(statusResolver.resolveTerminalStatus(version))
-                .createdAt(version.getCreatedAt())
-                .lastModifiedAt(version.getUpdatedAt())
-                .build();
-    }
 
-    public AgreementVersionResponse toVersionResponse(AgreementVersion version) {
+        public AgreementVersionSummaryResponse toVersionSummaryResponse(AgreementVersion version) {
+                return AgreementVersionSummaryResponse.builder()
+                                .id(version.getId())
+                                .agreementId(version.getAgreement().getId())
+                                .agreementName(version.getAgreement().getAgreementName())
+                                .versionNumber(version.getVersionNumber())
+                                .revisionType(version.getRevisionType())
+                                .ownerId(version.getOwner().getId())
+                                .ownerName(version.getOwner().getFullName())
+                                .startDate(version.getStartDate())
+                                .expiryDate(version.getExpiryDate())
+                                .approvalStatus(version.getApprovalStatus())
+                                .computedStatus(statusResolver.resolve(version))
+                                .terminalStatus(statusResolver.resolveTerminalStatus(version))
+                                .createdAt(version.getCreatedAt())
+                                .lastModifiedAt(version.getUpdatedAt())
+                                .build();
+        }
+
+        public AgreementVersionResponse toVersionResponse(AgreementVersion version) {
                 Agreement parent = version.getAgreement();
                 AgreementGroup group = parent.getAgreementGroup();
 
@@ -113,27 +113,34 @@ public class AgreementMapperService {
                 boolean isAssetRental = isAssetRentalIncomeType(
                                 version.getIncomeType() != null ? version.getIncomeType().getId() : null);
 
-                List<AgreementManufacturer> rawManufacturerRules = manufacturerRuleRepository.findByAgreementVersionId(versionIdForRules);
-                List<AgreementDivisionRule> rawDivisionRules = divisionRuleRepository.findByAgreementVersionId(versionIdForRules);
-                List<AgreementProductRule> rawProductRules = productRuleRepository.findByAgreementVersionId(versionIdForRules);
-                boolean hasComputedProducts = computedProductRepository.countByAgreementVersionId(versionIdForRules) > 0;
+                List<AgreementManufacturer> rawManufacturerRules = manufacturerRuleRepository
+                                .findByAgreementVersionId(versionIdForRules);
+                List<AgreementDivisionRule> rawDivisionRules = divisionRuleRepository
+                                .findByAgreementVersionId(versionIdForRules);
+                List<AgreementProductRule> rawProductRules = productRuleRepository
+                                .findByAgreementVersionId(versionIdForRules);
+                boolean hasComputedProducts = computedProductRepository
+                                .countByAgreementVersionId(versionIdForRules) > 0;
 
                 if (!isAssetRental
                                 && rawManufacturerRules.isEmpty()
                                 && rawDivisionRules.isEmpty()
                                 && rawProductRules.isEmpty()
                                 && !hasComputedProducts) {
-                        
-                        Optional<Long> fallbackVersionIdOpt = agreementVersionRepository.findLatestFallbackVersionIdWithRules(parent.getId());
+
+                        Optional<Long> fallbackVersionIdOpt = agreementVersionRepository
+                                        .findLatestFallbackVersionIdWithRules(parent.getId());
                         if (fallbackVersionIdOpt.isPresent()) {
-                            versionIdForRules = fallbackVersionIdOpt.get();
-                            rawManufacturerRules = manufacturerRuleRepository.findByAgreementVersionId(versionIdForRules);
-                            rawDivisionRules = divisionRuleRepository.findByAgreementVersionId(versionIdForRules);
-                            rawProductRules = productRuleRepository.findByAgreementVersionId(versionIdForRules);
+                                versionIdForRules = fallbackVersionIdOpt.get();
+                                rawManufacturerRules = manufacturerRuleRepository
+                                                .findByAgreementVersionId(versionIdForRules);
+                                rawDivisionRules = divisionRuleRepository.findByAgreementVersionId(versionIdForRules);
+                                rawProductRules = productRuleRepository.findByAgreementVersionId(versionIdForRules);
                         }
                 }
 
-                List<Long> manufacturerIds = rawManufacturerRules.stream().map(AgreementManufacturer::getManufacturerId).toList();
+                List<Long> manufacturerIds = rawManufacturerRules.stream().map(AgreementManufacturer::getManufacturerId)
+                                .toList();
 
                 List<Long> divisionIds = rawDivisionRules.stream()
                                 .map(AgreementDivisionRule::getDivisionId)
@@ -143,57 +150,59 @@ public class AgreementMapperService {
                                 .toList();
 
                 // ── Fire all three external Product Microservice calls in PARALLEL ────────
-                // Previously sequential (manufacturers → divisions → products), total wait = sum of timeouts.
+                // Previously sequential (manufacturers → divisions → products), total wait =
+                // sum of timeouts.
                 // Now total wait = max of one timeout.
-                AtomicReference<Map<Long, IntegrationManufacturerResponse>> mfrMapRef =
-                        new AtomicReference<>(Map.of());
+                AtomicReference<Map<Long, IntegrationManufacturerResponse>> mfrMapRef = new AtomicReference<>(Map.of());
                 AtomicReference<Map<Long, String>> divMapRef = new AtomicReference<>(Map.of());
-                AtomicReference<Map<String, IntegrationProductResponse>> prodMapRef =
-                        new AtomicReference<>(Map.of());
+                AtomicReference<Map<String, IntegrationProductResponse>> prodMapRef = new AtomicReference<>(Map.of());
 
                 CompletableFuture<Void> mfrFuture = manufacturerIds.isEmpty()
-                        ? CompletableFuture.completedFuture(null)
-                        : CompletableFuture.runAsync(() -> {
-                            try {
-                                mfrMapRef.set(productMasterIntegrationService.getManufacturersByIds(manufacturerIds));
-                            } catch (Exception ex) {
-                                log.warn("Could not hydrate manufacturer names: {}", ex.getMessage());
-                            }
-                        });
+                                ? CompletableFuture.completedFuture(null)
+                                : CompletableFuture.runAsync(() -> {
+                                        try {
+                                                mfrMapRef.set(productMasterIntegrationService
+                                                                .getManufacturersByIds(manufacturerIds));
+                                        } catch (Exception ex) {
+                                                log.warn("Could not hydrate manufacturer names: {}", ex.getMessage());
+                                        }
+                                });
 
                 CompletableFuture<Void> divFuture = divisionIds.isEmpty()
-                        ? CompletableFuture.completedFuture(null)
-                        : CompletableFuture.runAsync(() -> {
-                            try {
-                                divMapRef.set(productMasterIntegrationService.getDivisionNamesByIds(
-                                        manufacturerIds, divisionIds));
-                            } catch (Exception ex) {
-                                log.warn("Could not hydrate division names: {}", ex.getMessage());
-                            }
-                        });
+                                ? CompletableFuture.completedFuture(null)
+                                : CompletableFuture.runAsync(() -> {
+                                        try {
+                                                divMapRef.set(productMasterIntegrationService.getDivisionNamesByIds(
+                                                                manufacturerIds, divisionIds));
+                                        } catch (Exception ex) {
+                                                log.warn("Could not hydrate division names: {}", ex.getMessage());
+                                        }
+                                });
 
                 CompletableFuture<Void> prodFuture = productIds.isEmpty()
-                        ? CompletableFuture.completedFuture(null)
-                        : CompletableFuture.runAsync(() -> {
-                            try {
-                                prodMapRef.set(productMasterIntegrationService.getProductsByCodes(productIds));
-                            } catch (Exception ex) {
-                                log.warn("Could not hydrate product details: {}", ex.getMessage());
-                            }
-                        });
+                                ? CompletableFuture.completedFuture(null)
+                                : CompletableFuture.runAsync(() -> {
+                                        try {
+                                                prodMapRef.set(productMasterIntegrationService
+                                                                .getProductsByCodes(productIds));
+                                        } catch (Exception ex) {
+                                                log.warn("Could not hydrate product details: {}", ex.getMessage());
+                                        }
+                                });
 
                 // Join all three — total wait = slowest single call, not sum of all three
                 try {
-                    CompletableFuture.allOf(mfrFuture, divFuture, prodFuture).join();
+                        CompletableFuture.allOf(mfrFuture, divFuture, prodFuture).join();
                 } catch (Exception ex) {
-                    log.warn("One or more Product Microservice hydration futures failed: {}", ex.getMessage());
+                        log.warn("One or more Product Microservice hydration futures failed: {}", ex.getMessage());
                 }
 
                 Map<Long, IntegrationManufacturerResponse> manufacturerByIdMap = mfrMapRef.get();
                 Map<Long, String> divisionNamesByIdMap = divMapRef.get();
                 final Map<String, IntegrationProductResponse> finalProductsByCode = prodMapRef.get();
 
-                // Build manufacturer summaries (with DB fallback if external call returned nothing)
+                // Build manufacturer summaries (with DB fallback if external call returned
+                // nothing)
                 List<AgreementVersionResponse.ManufacturerSummary> manufacturers = new ArrayList<>();
                 if (!manufacturerIds.isEmpty()) {
                         manufacturers = manufacturerIds.stream()
@@ -201,24 +210,28 @@ public class AgreementMapperService {
                                                 IntegrationManufacturerResponse hydrated = manufacturerByIdMap.get(id);
                                                 return new AgreementVersionResponse.ManufacturerSummary(
                                                                 id,
-                                                                hydrated != null ? hydrated.getManufacturerName() : null);
+                                                                hydrated != null ? hydrated.getManufacturerName()
+                                                                                : null);
                                         })
                                         .toList();
                 } else {
                         // Fallback to computed products distinct manufacturers
                         try {
-                                List<Object[]> distinctMfrs = computedProductRepository.findDistinctManufacturersByVersionId(versionIdForRules);
+                                List<Object[]> distinctMfrs = computedProductRepository
+                                                .findDistinctManufacturersByVersionId(versionIdForRules);
                                 manufacturers = distinctMfrs.stream()
                                                 .map(row -> {
                                                         String mfrIdStr = (String) row[0];
                                                         String mfrName = (String) row[1];
                                                         Long mfrId = mfrIdStr != null ? Long.parseLong(mfrIdStr) : null;
-                                                        return new AgreementVersionResponse.ManufacturerSummary(mfrId, mfrName);
+                                                        return new AgreementVersionResponse.ManufacturerSummary(mfrId,
+                                                                        mfrName);
                                                 })
                                                 .filter(m -> m.id() != null)
                                                 .toList();
                         } catch (Exception ex) {
-                                log.warn("Could not extract distinct manufacturers from computed products: {}", ex.getMessage());
+                                log.warn("Could not extract distinct manufacturers from computed products: {}",
+                                                ex.getMessage());
                         }
                 }
 
@@ -456,25 +469,6 @@ public class AgreementMapperService {
                                 List.of());
         }
 
-        public AgreementVersion resolveListDisplayVersion(Agreement parent, AgreementVersion latest,
-                        Map<Long, AgreementVersion> currentVersionById,
-                        Long currentUserId, String filterStatus) {
-                // When filtering by DRAFT, show the DRAFT version instead of the current
-                // approved version
-                if ("DRAFT".equalsIgnoreCase(filterStatus) && latest != null
-                                && latest.getApprovalStatus() == ApprovalStatus.DRAFT
-                                && parent.getOwner().getId().equals(currentUserId)) {
-                        return latest;
-                }
-                if (parent.getCurrentVersionId() != null) {
-                        AgreementVersion current = currentVersionById.get(parent.getCurrentVersionId());
-                        if (current != null) {
-                                return current;
-                        }
-                }
-                return resolveVisibleLatest(parent, latest, currentUserId);
-        }
-
         public Pageable mapAgreementPageable(Pageable pageable) {
                 if (pageable.getSort().isUnsorted()) {
                         return pageable;
@@ -493,23 +487,7 @@ public class AgreementMapperService {
                 return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(orders));
         }
 
-        public AgreementVersion resolveVisibleLatest(Agreement parent, AgreementVersion latest, Long currentUserId) {
-                if (latest == null) {
-                        return null;
-                }
-                if (latest.getApprovalStatus() != ApprovalStatus.DRAFT
-                                || parent.getOwner().getId().equals(currentUserId)) {
-                        return latest;
-                }
-                if (parent.getCurrentVersionId() != null) {
-                        return agreementVersionRepository.findById(parent.getCurrentVersionId()).orElse(latest);
-                }
-                return agreementVersionRepository.findByAgreementId(parent.getId()).stream()
-                                .filter(v -> v.getApprovalStatus() != ApprovalStatus.DRAFT
-                                                || parent.getOwner().getId().equals(currentUserId))
-                                .max((a, b) -> Integer.compare(a.getVersionNumber(), b.getVersionNumber()))
-                                .orElse(null);
-        }
+
 
         public String resolveUserName(Long userId) {
                 if (userId == null) {

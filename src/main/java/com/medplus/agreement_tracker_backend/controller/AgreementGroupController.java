@@ -42,7 +42,7 @@ public class AgreementGroupController {
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(agreementGroupService.listAll(
                 pageable, isActive, groupName, lastModifiedBy, createdBy,
-                principal.getId(), principal.hasRight(RightCode.AGREEMENT_VIEW_ALL.name()),
+                principal.getId(), principal.hasRight(RightCode.AGREEMENT_VIEW_ALL.name()) || principal.hasRight(RightCode.DRAFT_VIEW_ALL.name()),
                 principal.hasRole("APPROVER"), principal.hasRole("ACCOUNT_MANAGER")));
     }
 
@@ -52,7 +52,7 @@ public class AgreementGroupController {
             @PathVariable Long groupId,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(agreementGroupService.getById(
-                groupId, principal.getId(), principal.hasRight(RightCode.AGREEMENT_VIEW_ALL.name()),
+                groupId, principal.getId(), principal.hasRight(RightCode.AGREEMENT_VIEW_ALL.name()) || principal.hasRight(RightCode.DRAFT_VIEW_ALL.name()),
                 principal.hasRole("APPROVER"), principal.hasRole("ACCOUNT_MANAGER")));
     }
 
@@ -106,7 +106,7 @@ public class AgreementGroupController {
     }
 
     @PostMapping("/{groupId}/submit-for-approval")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize("hasAnyAuthority('AGREEMENT_SUBMIT_MY', 'AGREEMENT_SUBMIT_ALL')")
     public ResponseEntity<BulkGroupSubmitResponse> submitGroupForApproval(
             @PathVariable Long groupId,
             @AuthenticationPrincipal UserPrincipal principal) {

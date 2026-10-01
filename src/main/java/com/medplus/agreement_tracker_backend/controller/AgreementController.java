@@ -65,15 +65,15 @@ public class AgreementController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDateTo,
             @AuthenticationPrincipal UserPrincipal principal) {
-        boolean canViewAll = principal.hasRight(RightCode.AGREEMENT_VIEW_ALL.name());
-        boolean canViewMy = principal.hasRight(RightCode.AGREEMENT_VIEW.name());
+        boolean canViewAll = principal.hasRight(RightCode.AGREEMENT_VIEW_ALL.name()) || principal.hasRight(RightCode.DRAFT_VIEW_ALL.name());
+        boolean canViewMy = principal.hasRight(RightCode.AGREEMENT_VIEW_MY.name()) || principal.hasRight(RightCode.DRAFT_VIEW_MY.name());
 
         String effectiveScope = scope.toUpperCase();
         if ("ALL".equals(effectiveScope) && !canViewAll) {
-            throw new AccessDeniedException("Missing AGREEMENT_VIEW_ALL right");
+            throw new AccessDeniedException("Missing AGREEMENT_VIEW_ALL or DRAFT_VIEW_ALL right");
         }
         if ("MY".equals(effectiveScope) && !canViewMy) {
-            throw new AccessDeniedException("Missing AGREEMENT_VIEW right");
+            throw new AccessDeniedException("Missing AGREEMENT_VIEW_MY or DRAFT_VIEW_MY right");
         }
         if (!canViewMy && canViewAll) {
             effectiveScope = "ALL";
@@ -105,7 +105,7 @@ public class AgreementController {
     }
 
     @PostMapping("/{id}/new-version")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_EDIT_AGREEMENT_ID)
     public ResponseEntity<AgreementVersionResponse> createNewVersion(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -114,7 +114,7 @@ public class AgreementController {
     }
 
     @PatchMapping("/{id}/in-progress")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(AGREEMENT_IN_PROGRESS)
     public ResponseEntity<AgreementVersionResponse> toggleInProgress(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -122,7 +122,7 @@ public class AgreementController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize(AGREEMENT_EDIT)
+    @PreAuthorize(DRAFT_DELETE_A)
     public ResponseEntity<Void> deleteDraftAgreement(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -131,7 +131,7 @@ public class AgreementController {
     }
 
     @PutMapping("/bulk-transfer")
-    @PreAuthorize(ADMIN_USERS)
+    @PreAuthorize("hasAnyAuthority('ADMIN_USERS', 'AGREEMENT_TRANSFER')")
     public ResponseEntity<Void> bulkTransfer(
             @Valid @RequestBody BulkTransferRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
